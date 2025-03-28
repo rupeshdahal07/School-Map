@@ -55,6 +55,43 @@ $(document).ready(function () {
             .school-item:hover {
                 transform: translateY(-1px);
             }
+            /* New Filter Styles */
+            .filter-group {
+                position: relative;
+                flex: 1;
+                min-width: 200px;
+                max-width: 100%;
+            }
+            
+            .filter-label {
+                display: block;
+                font-size: 0.875rem;
+                font-weight: 500;
+                color: #4B5563;
+                margin-bottom: 0.5rem;
+            }
+            
+            .filter-select {
+                display: block;
+                width: 100%;
+                padding: 0.5rem 2rem 0.5rem 0.75rem;
+                border: 1px solid #E5E7EB;
+                border-radius: 0.375rem;
+                appearance: none;
+                background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236B7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+                background-position: right 0.5rem center;
+                background-repeat: no-repeat;
+                background-size: 1.5em 1.5em;
+                box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+                font-size: 0.875rem;
+                transition: all 0.2s;
+            }
+            
+            .filter-select:focus {
+                outline: none;
+                border-color: #3B82F6;
+                box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+            }
         `)
         .appendTo('head');
         
@@ -546,6 +583,34 @@ function showSchoolDetails(schoolId) {
         
         // Fetch all schools
         fetchSchools("", "", "", "");
+    });
+
+    // Add this to your document ready function
+    // Toggle filter expansion/collapse
+    $("#expandCollapseFilters").click(function() {
+        const filtersContainer = $("#filtersContainer");
+        const icon = $(this).find("i");
+        const text = $(this).find("span");
+        
+        if (filtersContainer.hasClass("h-0")) {
+            // Expand
+            filtersContainer.removeClass("h-0 overflow-hidden").addClass("flex");
+            icon.removeClass("transform rotate-180");
+            text.text("Show Less");
+        } else {
+            // Collapse
+            filtersContainer.addClass("h-0 overflow-hidden").removeClass("flex");
+            icon.addClass("transform rotate-180");
+            text.text("Show Filters");
+        }
+    });
+
+    // Apply transition effect when filters change
+    $(".filter-select").change(function() {
+        $(this).addClass("border-blue-500");
+        setTimeout(() => {
+            $(this).removeClass("border-blue-500");
+        }, 500);
     });
 });
 

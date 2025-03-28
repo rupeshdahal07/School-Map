@@ -48,12 +48,28 @@
             </div>
         </header>
         
-        <!-- New Filter Navbar -->
-        <div class="bg-white p-3 rounded-lg shadow-md mb-4">
-            <div class="flex flex-wrap items-center gap-3">
-                <div class="flex items-center">
-                    <label for="provinceFilter" class="text-sm font-medium text-gray-700 mr-2">Province:</label>
-                    <select id="provinceFilter" class="p-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm">
+        <!-- Enhanced Filter Navbar -->
+        <div class="bg-white p-4 rounded-lg shadow-md mb-4">
+            <!-- Title and description -->
+            <div class="mb-3 flex justify-between items-center">
+                <div>
+                    <h3 class="text-gray-800 font-medium text-lg">Filter Schools</h3>
+                    <p class="text-gray-500 text-xs">Narrow down your search using these filters</p>
+                </div>
+                <button id="expandCollapseFilters" class="text-blue-600 hover:text-blue-800 text-sm flex items-center">
+                    <span class="mr-1">Show Less</span>
+                    <i class="fas fa-chevron-up transition-transform duration-300"></i>
+                </button>
+            </div>
+            
+            <!-- Filters container - use flex and wrap for responsive layout -->
+            <div id="filtersContainer" class="flex flex-wrap gap-4 pb-1">
+                <!-- Province Filter -->
+                <div class="filter-group">
+                    <label for="provinceFilter" class="filter-label">
+                        <i class="fas fa-map-marked-alt text-blue-500 mr-2"></i>Province
+                    </label>
+                    <select id="provinceFilter" class="filter-select">
                         <option value="">All Provinces</option>
                         <option value="Province No. 1">Province No. 1</option>
                         <option value="Madhesh Pradesh">Madhesh Pradesh</option>
@@ -65,17 +81,23 @@
                     </select>
                 </div>
                 
-                <div class="flex items-center">
-                    <label for="districtFilter" class="text-sm font-medium text-gray-700 mr-2">District:</label>
-                    <select id="districtFilter" class="p-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm">
+                <!-- District Filter -->
+                <div class="filter-group">
+                    <label for="districtFilter" class="filter-label">
+                        <i class="fas fa-location-dot text-green-500 mr-2"></i>District
+                    </label>
+                    <select id="districtFilter" class="filter-select">
                         <option value="">All Districts</option>
                         <!-- Districts will be populated dynamically -->
                     </select>
                 </div>
                 
-                <div class="flex items-center">
-                    <label for="municipalityTypeFilter" class="text-sm font-medium text-gray-700 mr-2">Municipality:</label>
-                    <select id="municipalityTypeFilter" class="p-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm">
+                <!-- Municipality Filter -->
+                <div class="filter-group">
+                    <label for="municipalityTypeFilter" class="filter-label">
+                        <i class="fas fa-city text-purple-500 mr-2"></i>Municipality
+                    </label>
+                    <select id="municipalityTypeFilter" class="filter-select">
                         <option value="">All Types</option>
                         <option value="Metropolitan City">Metropolitan City</option>
                         <option value="Sub-Metropolitan City">Sub-Metropolitan City</option>
@@ -84,22 +106,22 @@
                     </select>
                 </div>
                 
-                <div class="flex items-center">
-                    <label for="schoolTypeFilter" class="text-sm font-medium text-gray-700 mr-2">School Type:</label>
-                    <select id="schoolTypeFilter" class="p-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm">
+                <!-- School Type Filter -->
+                <div class="filter-group">
+                    <label for="schoolTypeFilter" class="filter-label">
+                        <i class="fas fa-school text-orange-500 mr-2"></i>School Type
+                    </label>
+                    <select id="schoolTypeFilter" class="filter-select">
                         <option value="">All Types</option>
                         <option value="Public">Public</option>
                         <option value="Community">Community</option>
                         <option value="Private">Private</option>
                     </select>
                 </div>
-                
-                <!-- <button id="clearFilters" class="ml-auto bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1.5 rounded text-sm transition-colors">
-                    <i class="fas fa-times-circle mr-1"></i> Clear
-                </button> -->
             </div>
             
-            <div id="activeFilters" class="mt-2"></div>
+            <!-- Active filters section -->
+            <div id="activeFilters" class="mt-3"></div>
         </div>
         
         <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
