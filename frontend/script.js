@@ -398,13 +398,13 @@ function showSchoolDetails(schoolId) {
                     
                     <div class="space-y-4">
                         <div class="bg-gray-50 p-4 rounded-lg">
-                            <h3 class="text-sm uppercase text-gray-500 font-medium mb-2">Location</h3>
+                            <h3 class="text-sm uppercase text-black-500 font-medium mb-2">Location</h3>
                             <p class="mb-1"><i class="fas fa-map-marker-alt text-gray-400 mr-2"></i>${school.address}</p>
                             <p><i class="fas fa-globe-asia text-gray-400 mr-2"></i>Province ${school.province || 'N/A'}</p>
                         </div>
                         
                         <div class="bg-gray-50 p-4 rounded-lg">
-                            <h3 class="text-sm uppercase text-gray-500 font-medium mb-2">School Info</h3>
+                            <h3 class="text-sm uppercase text-black-500 font-medium mb-2">School Info</h3>
                             <div class="grid grid-cols-2 gap-y-2">
                                 <p><span class="font-medium">Type:</span> ${school.school_type || 'N/A'}</p>
                                 <p><span class="font-medium">Est. Year:</span> ${school.established_year || 'N/A'}</p>
@@ -414,7 +414,7 @@ function showSchoolDetails(schoolId) {
                         </div>
                         
                         <div class="bg-gray-50 p-4 rounded-lg">
-                            <h3 class="text-sm uppercase text-gray-500 font-medium mb-2">Contact</h3>
+                            <h3 class="text-sm uppercase text-black-500 font-medium mb-2">Contact</h3>
                             <p class="mb-1"><i class="fas fa-phone text-gray-400 mr-2"></i>${school.contact_number || 'N/A'}</p>
                             <p class="mb-1"><i class="fas fa-envelope text-gray-400 mr-2"></i>${school.email || 'N/A'}</p>
                             <p>${school.website ? 
@@ -429,7 +429,7 @@ function showSchoolDetails(schoolId) {
                         
                         ${school.facilities ? `
                         <div class="bg-gray-50 p-4 rounded-lg">
-                            <h3 class="text-sm uppercase text-gray-500 font-medium mb-2">Facilities</h3>
+                            <h3 class="text-sm uppercase text-black-500 font-medium mb-2">Facilities</h3>
                             <p>${school.facilities}</p>
                         </div>` : ''}
                         
