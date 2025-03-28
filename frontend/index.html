@@ -17,16 +17,22 @@
 </head>
 <body class="bg-gray-100 min-h-screen p-4">
     <div class="container mx-auto">
-        <header class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-4 rounded-lg shadow-md mb-6 text-center">
-            <h1 class="text-2xl font-bold">Nepal School Map</h1>
-            <p class="text-sm mt-1 opacity-90">Find schools across different provinces</p>
+        <header class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-6 rounded-lg shadow-md mb-4">
+            <div class="flex items-center justify-center">
+                <img src="https://cdn-icons-png.flaticon.com/128/2602/2602414.png" alt="School Map Logo" class="w-10 h-10 mr-3">
+                <div class="text-center">
+                    <h1 class="text-3xl font-bold">Nepal School Map</h1>
+                    <p class="text-sm mt-1 opacity-90">Explore educational institutions across all provinces</p>
+                </div>
+            </div>
         </header>
         
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div class="lg:col-span-1 bg-white p-4 rounded-lg shadow-md">
-                <div class="mb-4">
-                    <label for="provinceFilter" class="block text-sm font-medium text-gray-700 mb-2"><Strong>Select Province</Strong></label>
-                    <select id="provinceFilter" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <!-- New Filter Navbar -->
+        <div class="bg-white p-3 rounded-lg shadow-md mb-4">
+            <div class="flex flex-wrap items-center gap-3">
+                <div class="flex items-center">
+                    <label for="provinceFilter" class="text-sm font-medium text-gray-700 mr-2">Province:</label>
+                    <select id="provinceFilter" class="p-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm">
                         <option value="">All Provinces</option>
                         <option value="Province No. 1">Province No. 1</option>
                         <option value="Madhesh Pradesh">Madhesh Pradesh</option>
@@ -38,37 +44,52 @@
                     </select>
                 </div>
                 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <div>
-                        <label for="districtFilter" class="block text-sm font-medium text-gray-700 mb-2"><Strong>Select District</Strong></label>
-                        <select id="districtFilter" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            <option value="">All Districts</option>
-                            <!-- Districts will be populated dynamically -->
-                        </select>
-                    </div>
-                    
-                    <div>
-                        <label for="municipalityTypeFilter" class="block text-sm font-medium text-gray-700 mb-2"><Strong>Municipality Type</Strong></label>
-                        <select id="municipalityTypeFilter" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            <option value="">All Types</option>
-                            <option value="Metropolitan City">Metropolitan City</option>
-                            <option value="Sub-Metropolitan City">Sub-Metropolitan City</option>
-                            <option value="Municipality">Municipality</option>
-                            <option value="Rural Municipality">Rural Municipality</option>
-                        </select>
-                    </div>
-                </div>
-                <div id="activeFilters" class="mt-3"></div>
-                <div class="mt-4 text-center">
-                    <button id="clearFilters" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded text-sm transition-colors">
-                        <i class="fas fa-times-circle mr-1"></i> Clear All Filters
-                    </button>
+                <div class="flex items-center">
+                    <label for="districtFilter" class="text-sm font-medium text-gray-700 mr-2">District:</label>
+                    <select id="districtFilter" class="p-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm">
+                        <option value="">All Districts</option>
+                        <!-- Districts will be populated dynamically -->
+                    </select>
                 </div>
                 
-                <div id="schoolList" class="mt-4 max-h-[400px] overflow-y-auto"></div>
+                <div class="flex items-center">
+                    <label for="municipalityTypeFilter" class="text-sm font-medium text-gray-700 mr-2">Municipality:</label>
+                    <select id="municipalityTypeFilter" class="p-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm">
+                        <option value="">All Types</option>
+                        <option value="Metropolitan City">Metropolitan City</option>
+                        <option value="Sub-Metropolitan City">Sub-Metropolitan City</option>
+                        <option value="Municipality">Municipality</option>
+                        <option value="Rural Municipality">Rural Municipality</option>
+                    </select>
+                </div>
+                
+                <div class="flex items-center">
+                    <label for="schoolTypeFilter" class="text-sm font-medium text-gray-700 mr-2">School Type:</label>
+                    <select id="schoolTypeFilter" class="p-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm">
+                        <option value="">All Types</option>
+                        <option value="Public">Public</option>
+                        <option value="Community">Community</option>
+                        <option value="Private">Private</option>
+                    </select>
+                </div>
+                
+                <button id="clearFilters" class="ml-auto bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1.5 rounded text-sm transition-colors">
+                    <i class="fas fa-times-circle mr-1"></i> Clear
+                </button>
             </div>
             
-            <div class="lg:col-span-2">
+            <div id="activeFilters" class="mt-2"></div>
+        </div>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+            <!-- School List Panel -->
+            <div class="lg:col-span-1 bg-white p-4 rounded-lg shadow-md">
+                <h2 class="font-bold text-lg mb-3 text-gray-700">School List</h2>
+                <div id="schoolList" class="max-h-[550px] overflow-y-auto"></div>
+            </div>
+            
+            <!-- Map Panel -->
+            <div class="lg:col-span-3">
                 <div id="map" class="h-[600px] rounded-lg shadow-md"></div>
             </div>
         </div>

@@ -7,24 +7,37 @@ $(document).ready(function () {
             .school-popup p { margin: 3px 0; font-size: 13px; }
             .view-details-btn { cursor: pointer; }
             .leaflet-popup-content { min-width: 200px; }
+            #schoolDetailsPanel { box-shadow: -5px 0 15px rgba(0,0,0,0.2); }
+            #schoolDetailsOverlay { backdrop-filter: blur(2px); transition: opacity 0.3s; }
+            .school-icon-legend { display: flex; align-items: center; margin-bottom: 5px; }
+            .school-icon-legend img { width: 20px; height: 20px; margin-right: 10px; }
         `)
         .appendTo('head');
         
-    // Define a custom flag icon for school markers
-    var flagIcon = L.icon({
-        iconUrl: 'https://upload.wikimedia.org/wikipedia/commons/9/9b/Flag_of_Nepal.svg', // Nepali flag URL
-        iconSize: [32, 42], // Adjust size for better visibility
-        iconAnchor: [16, 42], // Anchor point at the bottom
-        popupAnchor: [0, -40] // Position popup above flag
-    });
-    
-    // Google Maps style marker icon
-    var googleIcon = L.icon({
-        iconUrl: 'https://cdn-icons-png.flaticon.com/128/7720/7720724.png', // Google Maps marker style
+    // --------------------------------Define different icons for school types
+    var privateSchoolIcon = L.icon({
+        iconUrl: 'https://cdn-icons-png.flaticon.com/128/17573/17573589.png', // Private school icon
         iconSize: [32, 32],
         iconAnchor: [16, 32],
         popupAnchor: [0, -32]
     });
+    
+    
+    var communitySchoolIcon = L.icon({
+        iconUrl: 'https://cdn-icons-png.flaticon.com/128/1183/1183386.png', // Community school icon
+        iconSize: [32, 32],
+        iconAnchor: [16, 32],
+        popupAnchor: [0, -32]
+    });
+    
+    var defaultSchoolIcon = L.icon({
+        iconUrl: 'https://cdn-icons-png.flaticon.com/128/1691/1691970.png', // Default school icon
+        iconSize: [32, 32],
+        iconAnchor: [16, 32],
+        popupAnchor: [0, -32]
+    });
+
+   
 
     // Initialize Leaflet map
     var map = L.map('map').setView([27.7, 85.3], 7); // Center on Nepal
@@ -73,14 +86,16 @@ $(document).ready(function () {
         }).addTo(map);
     });
 
-    // Modify the fetchSchools function to include district and municipality_type filters
-    function fetchSchools(province = "", district = "", municipalityType = "") {
+    // Modify the fetchSchools function to use the correct parameter name
+    function fetchSchools(province = "", district = "", municipalityType = "", schoolType = "") {
         $.ajax({
-            url: `http://127.0.0.1:8000/api/schools/?province=${province}&district=${district}&municipality_type=${municipalityType}`,
+            url: `http://127.0.0.1:8000/api/schools/?province=${province}&district=${district}&municipality_type=${municipalityType}&school_type=${schoolType}`,
             type: "GET",
             dataType: "json",
             success: function (data) {
                 console.log("Data received from backend:", data);
+                console.log("Filter applied - School Type:", schoolType);
+                // Rest of your code remains the same
                 if (data && data.length > 0) {
                     console.log("First school:", data[0]);
                 } else {
@@ -93,8 +108,12 @@ $(document).ready(function () {
                 if (province && !district) {
                     updateDistrictOptions(data);
                 }
+                
+                // Update active filters display
+                updateActiveFilters();
             },
             error: function (xhr, status, error) {
+                // Error handling remains the same
                 console.error("Error fetching schools:", status, error);
                 console.log("Response:", xhr.responseText);
                 console.log("Status code:", xhr.status);
@@ -139,7 +158,7 @@ $(document).ready(function () {
                         <span class='flex items-center mr-2 mb-1'><i class="fa fa-location-arrow" aria-hidden="true" style="font-size:12px;"></i>${school.address}</span>
                         ${school.province ? `<span class='text-xs bg-blue-100 px-2 py-1 rounded-full mb-1'>Province ${school.province}</span>` : ''}
                     </div>
-                    <div class='text-xs text-gray-500 mt-1'>${school.type || 'School'} · ${school.established_year ? `Est. ${school.established_year}` : ''}</div>
+                    <div class='text-xs text-gray-500 mt-1'>${school.school_type || 'School'} · ${school.established_year ? `Est. ${school.established_year}` : ''}</div>
                 </div>
             `;
         });
@@ -172,20 +191,33 @@ $(document).ready(function () {
         });
     }
 
-    // Function to update map with flag markers
+    // Function to update map with appropriate markers based on school type
     function updateMap(schools) {
         markersLayer.clearLayers(); // Remove previous markers
+        
         schools.forEach(school => {
-            // Create richer popup content with more details
+            // Determine which icon to use based on school type
+            let icon;
+            let schoolType = (school.school_type || "").toLowerCase();
+            
+            if (schoolType.includes("private")) {
+                icon = privateSchoolIcon;
+            } else if (schoolType.includes("community")) {
+                icon = communitySchoolIcon;
+            } else {
+                icon = defaultSchoolIcon;
+            }
+            
+            // Create popup content
             const popupContent = `
                 <div class="school-popup">
                     <h3 class="text-lg font-bold">${school.name}</h3>
                     <div class="mt-2">
                         <p><strong>Address:</strong> ${school.address}</p>
                         <p><strong>Province:</strong> ${school.province || 'N/A'}</p>
-                        <p><strong>Type:</strong> ${school.type || 'N/A'}</p>
+                        <p><strong>Type:</strong> ${school.school_type || 'N/A'}</p>
                         <p><strong>Established:</strong> ${school.established_year || 'N/A'}</p>
-                        <p><strong>Contact:</strong> ${school.contact || 'N/A'}</p>
+                        <p><strong>Contact:</strong> ${school.contact_number || 'N/A'}</p>
                     </div>
                     <div class="mt-2">
                         <button class="view-details-btn bg-blue-500 text-white px-2 py-1 rounded text-sm" 
@@ -193,7 +225,8 @@ $(document).ready(function () {
                     </div>
                 </div>`;
     
-            let marker = L.marker([school.latitude, school.longitude], { icon: googleIcon })
+            // Create marker with appropriate icon
+            let marker = L.marker([school.latitude, school.longitude], { icon: icon })
                 .bindPopup(popupContent)
                 .addTo(markersLayer);
         });
@@ -321,42 +354,56 @@ function showSchoolDetails(schoolId) {
         let selectedProvince = $(this).val();
         let selectedDistrict = ""; // Reset district when province changes
         let selectedMunicipalityType = $("#municipalityTypeFilter").val();
+        let selectedSchoolType = $("#schoolTypeFilter").val();
         
         // Clear district selection when province changes
         $("#districtFilter").val("");
         
-        fetchSchools(selectedProvince, selectedDistrict, selectedMunicipalityType);
+        fetchSchools(selectedProvince, selectedDistrict, selectedMunicipalityType, selectedSchoolType);
     });
 
     $("#districtFilter").change(function () {
         let selectedProvince = $("#provinceFilter").val();
         let selectedDistrict = $(this).val();
         let selectedMunicipalityType = $("#municipalityTypeFilter").val();
+        let selectedSchoolType = $("#schoolTypeFilter").val();
         
-        fetchSchools(selectedProvince, selectedDistrict, selectedMunicipalityType);
+        fetchSchools(selectedProvince, selectedDistrict, selectedMunicipalityType, selectedSchoolType);
     });
 
     $("#municipalityTypeFilter").change(function () {
         let selectedProvince = $("#provinceFilter").val();
         let selectedDistrict = $("#districtFilter").val();
         let selectedMunicipalityType = $(this).val();
+        let selectedSchoolType = $("#schoolTypeFilter").val();
         
-        fetchSchools(selectedProvince, selectedDistrict, selectedMunicipalityType);
+        fetchSchools(selectedProvince, selectedDistrict, selectedMunicipalityType, selectedSchoolType);
     });
 
     // Add this with your other event listeners
+    $("#schoolTypeFilter").change(function () {
+        let selectedProvince = $("#provinceFilter").val();
+        let selectedDistrict = $("#districtFilter").val();
+        let selectedMunicipalityType = $("#municipalityTypeFilter").val();
+        let selectedSchoolType = $(this).val();
+        
+        fetchSchools(selectedProvince, selectedDistrict, selectedMunicipalityType, selectedSchoolType);
+    });
+
+    // Update the clear filters button to reset school type too
     $("#clearFilters").click(function() {
         // Reset all dropdowns
         $("#provinceFilter").val("");
         $("#districtFilter").val("");
         $("#municipalityTypeFilter").val("");
+        $("#schoolTypeFilter").val("");
         
         // Fetch all schools
-        fetchSchools("", "", "");
+        fetchSchools("", "", "", "");
     });
 
     // Load all schools initially
-    fetchSchools("", "", "");
+    fetchSchools("", "", "", "");
 
     // Test API connectivity directly
     console.log("Testing API connectivity...");
@@ -371,29 +418,68 @@ function showSchoolDetails(schoolId) {
         .catch(error => {
             console.error("API Test Error:", error);
         });
+
+    // Call this after your map is initialized
+    addMapLegend(map);
 });
+
+// Change this function to accept the map as a parameter
+function addMapLegend(map) {
+    // Create a legend control
+    var legend = L.control({ position: 'bottomright' });
+    
+    legend.onAdd = function(map) {
+        var div = L.DomUtil.create('div', 'info legend bg-white p-3 rounded shadow-md');
+        
+        div.innerHTML = `
+            <h4 class="font-medium mb-2">School Types</h4>
+            <div class="school-icon-legend">
+                <img src="https://cdn-icons-png.flaticon.com/128/17573/17573589.png" alt="Private School">
+                <span>Private School</span>
+            </div>
+            <div class="school-icon-legend">
+                <img src="https://cdn-icons-png.flaticon.com/128/1183/1183386.png" alt="Community School">
+                <span>Community School</span>
+            </div>
+            <div class="school-icon-legend">
+                <img src="https://cdn-icons-png.flaticon.com/128/1691/1691970.png" alt="Other School">
+                <span>Other Types</span>
+            </div>
+        `;
+        
+        div.style.cssText = 'background-color: white; padding: 10px; border-radius: 5px;';
+        return div;
+    };
+    
+    legend.addTo(map);
+}
 
 // Add this function
 function updateActiveFilters() {
     const province = $("#provinceFilter").val();
     const district = $("#districtFilter").val();
     const municipalityType = $("#municipalityTypeFilter").val();
+    const schoolType = $("#schoolTypeFilter").val();
     
     let filterHTML = '';
     
-    if (province || district || municipalityType) {
-        filterHTML = '<div class="text-sm bg-blue-50 p-2 rounded mb-3"><strong>Active Filters:</strong> ';
+    if (province || district || municipalityType || schoolType) {
+        filterHTML = '<div class="flex flex-wrap gap-1 items-center"><span class="font-medium text-xs text-gray-500">Active Filters:</span>';
         
         if (province) {
-            filterHTML += `<span class="inline-block bg-blue-100 text-blue-800 rounded-full px-2 py-1 text-xs mr-1 mb-1">Province: ${province}</span>`;
+            filterHTML += `<span class="inline-block bg-blue-100 text-blue-800 rounded-full px-2 py-0.5 text-xs mr-1">Province: ${province}</span>`;
         }
         
         if (district) {
-            filterHTML += `<span class="inline-block bg-blue-100 text-blue-800 rounded-full px-2 py-1 text-xs mr-1 mb-1">District: ${district}</span>`;
+            filterHTML += `<span class="inline-block bg-blue-100 text-blue-800 rounded-full px-2 py-0.5 text-xs mr-1">District: ${district}</span>`;
         }
         
         if (municipalityType) {
-            filterHTML += `<span class="inline-block bg-blue-100 text-blue-800 rounded-full px-2 py-1 text-xs mr-1 mb-1">Municipality Type: ${municipalityType}</span>`;
+            filterHTML += `<span class="inline-block bg-blue-100 text-blue-800 rounded-full px-2 py-0.5 text-xs mr-1">Municipality: ${municipalityType}</span>`;
+        }
+        
+        if (schoolType) {
+            filterHTML += `<span class="inline-block bg-blue-100 text-blue-800 rounded-full px-2 py-0.5 text-xs mr-1">Type: ${schoolType}</span>`;
         }
         
         filterHTML += '</div>';
