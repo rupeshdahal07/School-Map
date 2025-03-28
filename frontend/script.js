@@ -1,5 +1,5 @@
 $(document).ready(function () {
-    // Add custom CSS for popups
+    // Add custom CSS for popups and map height
     $('<style>')
         .prop('type', 'text/css')
         .html(`
@@ -11,6 +11,50 @@ $(document).ready(function () {
             #schoolDetailsOverlay { backdrop-filter: blur(2px); transition: opacity 0.3s; }
             .school-icon-legend { display: flex; align-items: center; margin-bottom: 5px; }
             .school-icon-legend img { width: 20px; height: 20px; margin-right: 10px; }
+            /* Responsive map height */
+            #map { 
+                height: calc(100vh - 160px); 
+                min-height: 600px; 
+            }
+            @media (max-height: 800px) {
+                #map {
+                    min-height: 500px;
+                }
+            }
+            /* New styles for school list */
+            .line-clamp-1 {
+                display: -webkit-box;
+                -webkit-line-clamp: 1;
+                -webkit-box-orient: vertical;
+                overflow: hidden;
+            }
+            .line-clamp-2 {
+                display: -webkit-box;
+                -webkit-line-clamp: 2;
+                -webkit-box-orient: vertical;
+                overflow: hidden;
+            }
+            #schoolList {
+                scrollbar-width: thin;
+                scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
+            }
+            #schoolList::-webkit-scrollbar {
+                width: 6px;
+            }
+            #schoolList::-webkit-scrollbar-track {
+                background: transparent;
+            }
+            #schoolList::-webkit-scrollbar-thumb {
+                background-color: rgba(156, 163, 175, 0.5);
+                border-radius: 20px;
+            }
+            .school-item {
+                position: relative;
+                transition: all 0.2s ease;
+            }
+            .school-item:hover {
+                transform: translateY(-1px);
+            }
         `)
         .appendTo('head');
         
@@ -111,6 +155,13 @@ $(document).ready(function () {
                 
                 // Update active filters display
                 updateActiveFilters();
+
+                // Update school count in the header
+                $("#schoolCount").text(data.length);
+                
+                // Calculate unique districts
+                const districts = [...new Set(data.map(school => school.district).filter(Boolean))];
+                $("#districtCount").text(districts.length);
             },
             error: function (xhr, status, error) {
                 // Error handling remains the same
@@ -142,23 +193,71 @@ $(document).ready(function () {
         $("#districtFilter").html(options);
     }
 
-    // Function to update school list
+    // Function to update school list with improved UI
     function updateSchoolList(schools) {
         if (schools.length === 0) {
-            $("#schoolList").html("<div class='text-center p-4'>No schools found matching your criteria.</div>");
+            $("#schoolList").html(`
+                <div class='flex flex-col items-center justify-center p-8 text-center'>
+                    <svg class="w-16 h-16 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M12 14h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <p class='text-gray-500'>No schools found matching your criteria.</p>
+                    <p class='text-gray-400 text-sm mt-1'>Try adjusting your filters.</p>
+                </div>
+            `);
             return;
         }
         
-        let html = "<div class='grid gap-3'>";
-        schools.forEach(school => {
+        // Add counter for total schools
+        let html = `<div class="mb-3 text-sm text-gray-600 font-medium flex justify-between items-center">
+                        <div>Found <span class="text-blue-600 font-bold">${schools.length}</span> schools</div>
+                        <div class="text-xs text-gray-500">Click to view details</div>
+                    </div>`;
+        
+        html += "<div class='space-y-3'>";
+        schools.forEach((school, index) => {
+            // Determine school type badge color
+            let typeBadgeClass = "bg-gray-100 text-gray-600";
+            if (school.school_type) {
+                const type = school.school_type.toLowerCase();
+                if (type.includes('private')) {
+                    typeBadgeClass = "bg-purple-100 text-purple-700";
+                } else if (type.includes('community')) {
+                    typeBadgeClass = "bg-green-100 text-green-700";
+                } else if (type.includes('public')) {
+                    typeBadgeClass = "bg-blue-100 text-blue-700";
+                }
+            }
+            
             html += `
-                <div class='school-item border rounded-lg p-3 hover:bg-gray-50 cursor-pointer transition-colors' data-lat='${school.latitude}' data-lng='${school.longitude}' data-id='${school.id}'>
-                    <div class='font-bold text-blue-600 mb-1'><i class="fa fa-graduation-cap" aria-hidden="true" style="color: black;"></i> ${school.name}</div>
-                    <div class='text-sm text-gray-600 flex flex-wrap items-center'>
-                        <span class='flex items-center mr-2 mb-1'><i class="fa fa-location-arrow" aria-hidden="true" style="font-size:12px;"></i>${school.address}</span>
-                        ${school.province ? `<span class='text-xs bg-blue-100 px-2 py-1 rounded-full mb-1'>Province ${school.province}</span>` : ''}
+                <div class='school-item border border-gray-200 rounded-lg p-3 hover:bg-gray-50 transition-all duration-200 cursor-pointer ${index === 0 ? 'bg-blue-50 border-blue-300 shadow-sm' : ''}' 
+                     data-lat='${school.latitude}' data-lng='${school.longitude}' data-id='${school.id}'>
+                    <div class='flex items-start'>
+                        <div class="school-icon flex-shrink-0 mr-3 mt-1">
+                            <img src="${
+                                school.school_type && school.school_type.toLowerCase().includes('private') 
+                                ? 'https://cdn-icons-png.flaticon.com/128/17573/17573589.png' 
+                                : school.school_type && school.school_type.toLowerCase().includes('community') 
+                                ? 'https://cdn-icons-png.flaticon.com/128/1183/1183386.png' 
+                                : 'https://cdn-icons-png.flaticon.com/128/1691/1691970.png'
+                            }" class="w-5 h-5" alt="School icon">
+                        </div>
+                        <div class="w-full">
+                            <div class='font-bold text-gray-800 mb-1 line-clamp-2'>${school.name}</div>
+                            
+                            <div class='flex flex-wrap gap-1 mb-1.5'>
+                                <span class='${typeBadgeClass} text-xs px-2 py-0.5 rounded-full'>${school.school_type || 'School'}</span>
+                                ${school.established_year ? `<span class='bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5 rounded-full'>Est. ${school.established_year}</span>` : ''}
+                            </div>
+                            
+                            <div class='text-xs text-gray-500 flex items-start'>
+                                <i class="fas fa-map-marker-alt mt-0.5 mr-1"></i>
+                                <span class="line-clamp-1">
+                                    ${school.address}${school.province ? `, ${school.province}` : ''}
+                                </span>
+                            </div>
+                        </div>
                     </div>
-                    <div class='text-xs text-gray-500 mt-1'>${school.school_type || 'School'} · ${school.established_year ? `Est. ${school.established_year}` : ''}</div>
                 </div>
             `;
         });
@@ -168,6 +267,12 @@ $(document).ready(function () {
         
         // Add click event for each school item
         $(".school-item").on("click", function() {
+            // Remove highlight from all items
+            $(".school-item").removeClass("bg-blue-50 border-blue-300 shadow-sm");
+            
+            // Add highlight to clicked item
+            $(this).addClass("bg-blue-50 border-blue-300 shadow-sm");
+            
             const lat = $(this).data('lat');
             const lng = $(this).data('lng');
             const id = $(this).data('id');
@@ -184,10 +289,6 @@ $(document).ready(function () {
             
             // Show details
             showSchoolDetails(id);
-            
-            // Highlight selected school
-            $(".school-item").removeClass("bg-blue-50 border-blue-300");
-            $(this).addClass("bg-blue-50 border-blue-300");
         });
     }
 

@@ -17,12 +17,33 @@
 </head>
 <body class="bg-gray-100 min-h-screen p-4">
     <div class="container mx-auto">
-        <header class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-6 rounded-lg shadow-md mb-4">
-            <div class="flex items-center justify-center">
-                <img src="https://cdn-icons-png.flaticon.com/128/2602/2602414.png" alt="School Map Logo" class="w-10 h-10 mr-3">
-                <div class="text-center">
-                    <h1 class="text-3xl font-bold">Nepal School Map</h1>
-                    <p class="text-sm mt-1 opacity-90">Explore educational institutions across all provinces</p>
+        <header class="bg-gradient-to-r from-blue-600 via-indigo-600 to-indigo-800 text-white p-4 rounded-lg shadow-md mb-4">
+            <div class="flex flex-wrap items-center justify-between">
+                <!-- Logo and Title Section -->
+                <div class="flex items-center">
+                    <div class="bg-white p-2 rounded-lg shadow-sm mr-3">
+                        <img src="https://cdn-icons-png.flaticon.com/128/2602/2602414.png" alt="School Map Logo" class="w-9 h-9">
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-bold">Nepal School Map</h1>
+                        <p class="text-sm opacity-90">Explore educational institutions across all provinces</p>
+                    </div>
+                </div>
+                
+                <!-- Stats Section -->
+                <div class="flex items-center gap-4 mt-2 sm:mt-0">
+                    <!-- <div class="text-center px-3 py-1 bg-white bg-opacity-10 rounded-md">
+                        <div class="text-xl font-bold">7</div>
+                        <div class="text-xs opacity-80">Provinces</div>
+                    </div> -->
+                    <div class="text-center px-3 py-1 bg-white bg-opacity-10 rounded-md">
+                        <div class="text-xl font-bold" id="schoolCount">--</div>
+                        <div class="text-xs opacity-80">Schools</div>
+                    </div>
+                    <div class="text-center px-3 py-1 bg-white bg-opacity-10 rounded-md">
+                        <div class="text-xl font-bold" id="districtCount">--</div>
+                        <div class="text-xs opacity-80">Districts</div>
+                    </div>
                 </div>
             </div>
         </header>

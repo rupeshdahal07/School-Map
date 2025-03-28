@@ -7,8 +7,11 @@ class FacilitySerializer(serializers.ModelSerializer):
         fields = ['id', 'name']
 
 class SchoolSerializer(serializers.ModelSerializer):
-    facilities = FacilitySerializer(many=True, read_only=True)
-
+    facilities = serializers.SerializerMethodField()
+    
+    def get_facilities(self, obj):
+        return list(obj.facilities.values_list('name', flat=True))
+    
     class Meta:
         model = School
         fields = '__all__'
