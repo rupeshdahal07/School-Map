@@ -421,6 +421,31 @@ function showSchoolDetails(schoolId) {
 
     // Call this after your map is initialized
     addMapLegend(map);
+    
+    // Set up filter handlers
+    setupFilterHandlers();
+    
+    // Initialize active filters on page load
+    updateActiveFilters();
+    
+    // Add document-level event delegation for the clear button
+    $(document).on("click", "#clearActiveFilters", function(e) {
+        e.preventDefault();
+        
+        console.log("Clear button clicked via delegation");
+        
+        // Reset all dropdowns
+        $("#provinceFilter").val("");
+        $("#districtFilter").val("");
+        $("#municipalityTypeFilter").val("");
+        $("#schoolTypeFilter").val("");
+        
+        // Clear active filters display
+        $("#activeFilters").html('');
+        
+        // Fetch all schools
+        fetchSchools("", "", "", "");
+    });
 });
 
 // Change this function to accept the map as a parameter
@@ -454,7 +479,7 @@ function addMapLegend(map) {
     legend.addTo(map);
 }
 
-// Add this function
+// Updated updateActiveFilters function with better event handling
 function updateActiveFilters() {
     const province = $("#provinceFilter").val();
     const district = $("#districtFilter").val();
@@ -464,26 +489,78 @@ function updateActiveFilters() {
     let filterHTML = '';
     
     if (province || district || municipalityType || schoolType) {
-        filterHTML = '<div class="flex flex-wrap gap-1 items-center"><span class="font-medium text-xs text-gray-500">Active Filters:</span>';
+        // Change from justify-between to just a flex container with gap
+        filterHTML = '<div class="flex flex-wrap items-center gap-3">';
+        
+        // Active filters tags first
+        filterHTML += '<span class="font-medium text-xs text-gray-500">Active Filters:</span>';
         
         if (province) {
-            filterHTML += `<span class="inline-block bg-blue-100 text-blue-800 rounded-full px-2 py-0.5 text-xs mr-1">Province: ${province}</span>`;
+            filterHTML += `<span class="inline-block bg-blue-100 text-blue-800 rounded-full px-2 py-0.5 text-xs">Province: ${province}</span>`;
         }
         
         if (district) {
-            filterHTML += `<span class="inline-block bg-blue-100 text-blue-800 rounded-full px-2 py-0.5 text-xs mr-1">District: ${district}</span>`;
+            filterHTML += `<span class="inline-block bg-blue-100 text-blue-800 rounded-full px-2 py-0.5 text-xs">District: ${district}</span>`;
         }
         
         if (municipalityType) {
-            filterHTML += `<span class="inline-block bg-blue-100 text-blue-800 rounded-full px-2 py-0.5 text-xs mr-1">Municipality: ${municipalityType}</span>`;
+            filterHTML += `<span class="inline-block bg-blue-100 text-blue-800 rounded-full px-2 py-0.5 text-xs">Municipality: ${municipalityType}</span>`;
         }
         
         if (schoolType) {
-            filterHTML += `<span class="inline-block bg-blue-100 text-blue-800 rounded-full px-2 py-0.5 text-xs mr-1">Type: ${schoolType}</span>`;
+            filterHTML += `<span class="inline-block bg-blue-100 text-blue-800 rounded-full px-2 py-0.5 text-xs">Type: ${schoolType}</span>`;
         }
+        
+        // Clear button right after the filter tags (not wrapped in its own div)
+        filterHTML += '<button id="clearActiveFilters" class="bg-red-100 hover:bg-red-200 text-red-700 font-medium px-3 py-0.5 rounded-md text-xs transition-colors flex items-center shadow-sm">';
+        filterHTML += '<i class="fas fa-times-circle mr-1"></i> Clear</button>';
         
         filterHTML += '</div>';
     }
     
+    // Update the DOM
     $("#activeFilters").html(filterHTML);
+    
+    // Add direct event listener to the button we just created
+    if (province || district || municipalityType || schoolType) {
+        // Using setTimeout to ensure DOM is updated before adding the event
+        setTimeout(() => {
+            $("#clearActiveFilters").on("click", function(e) {
+                e.preventDefault();
+                
+                // Reset all dropdowns
+                $("#provinceFilter").val("");
+                $("#districtFilter").val("");
+                $("#municipalityTypeFilter").val("");
+                $("#schoolTypeFilter").val("");
+                
+                // Clear active filters display
+                $("#activeFilters").html('');
+                
+                // Fetch all schools
+                fetchSchools("", "", "", "");
+                
+                console.log("Clear filters clicked");
+            });
+        }, 0);
+    }
+}
+
+// Add unified filter handler
+function setupFilterHandlers() {
+    $("#provinceFilter, #districtFilter, #municipalityTypeFilter, #schoolTypeFilter").on("change", function() {
+        let selectedProvince = $("#provinceFilter").val();
+        let selectedDistrict = $("#districtFilter").val();
+        let selectedMunicipalityType = $("#municipalityTypeFilter").val();
+        let selectedSchoolType = $("#schoolTypeFilter").val();
+        
+        // Special handling for province change
+        if ($(this).attr('id') === 'provinceFilter') {
+            // Reset district when province changes
+            selectedDistrict = "";
+            $("#districtFilter").val("");
+        }
+        
+        fetchSchools(selectedProvince, selectedDistrict, selectedMunicipalityType, selectedSchoolType);
+    });
 }
