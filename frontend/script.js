@@ -385,6 +385,10 @@ function showSchoolDetails(schoolId) {
         dataType: "json",
         success: function(school) {
             // Create modal or sidebar with detailed information
+             const googleMapsUrl = school.google_maps_url || 
+                                 (school.latitude && school.longitude ? 
+                                  `https://www.google.com/maps?q=${school.latitude},${school.longitude}` : 
+                                  `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(school.address + ', ' + (school.district || '') + ', ' + (school.province || ''))}`);
             const detailsHTML = `
                 <div class="p-6 relative">
                     <button id="closeDetailsBtn" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800">
@@ -400,7 +404,13 @@ function showSchoolDetails(schoolId) {
                         <div class="bg-gray-50 p-4 rounded-lg">
                             <h3 class="text-sm uppercase text-black-500 font-medium mb-2">Location</h3>
                             <p class="mb-1"><i class="fas fa-map-marker-alt text-gray-400 mr-2"></i>${school.address}</p>
-                            <p><i class="fas fa-globe-asia text-gray-400 mr-2"></i>Province ${school.province || 'N/A'}</p>
+                            <p class="mb-2"><i class="fas fa-globe-asia text-gray-400 mr-2"></i>Province ${school.province || 'N/A'}</p>
+                            <a href="${googleMapsUrl}" target="_blank" class="text-blue-600 hover:underline flex items-center">
+                                <i class="fas fa-map text-gray-400 mr-2"></i>View on Google Maps
+                                <svg class="w-3 h-3 ml-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                                </svg>
+                            </a>
                         </div>
                         
                         <div class="bg-gray-50 p-4 rounded-lg">
@@ -432,11 +442,12 @@ function showSchoolDetails(schoolId) {
                             <h3 class="text-sm uppercase text-black-500 font-medium mb-2">Facilities</h3>
                             <p>${school.facilities}</p>
                         </div>` : ''}
+      
                         
                         <div class="mt-6 text-center">
-                            <button class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md shadow-sm transition duration-200">
-                                Get Directions
-                            </button>
+                            <a href="${googleMapsUrl}" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md shadow-sm transition duration-200 inline-flex items-center">
+                                <i class="fas fa-directions mr-2"></i> Get Directions
+                            </a>
                         </div>
                     </div>
                 </div>`;

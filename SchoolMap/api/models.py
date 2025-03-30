@@ -128,6 +128,7 @@ class School(models.Model):
     contact_number = models.CharField(max_length=15, blank=True, null=True)
     email = models.EmailField(blank=True, null=True)
     website = models.URLField(blank=True, null=True)
+    google_maps_link = models.URLField(blank=True, null=True, help_text="Direct link to this location on Google Maps")
     
     # School Type
     school_type = models.CharField(max_length=50, choices=SCHOOL_TYPE_CHOICES)

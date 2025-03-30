@@ -12,6 +12,9 @@ class SchoolSerializer(serializers.ModelSerializer):
     def get_facilities(self, obj):
         return list(obj.facilities.values_list('name', flat=True))
     
+    def get_google_maps_url(self, obj):
+        return obj.get_google_maps_url
+    
     class Meta:
         model = School
         fields = '__all__'

@@ -26,3 +26,14 @@ class SchoolViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(school_type__icontains=school_type)
 
         return queryset
+
+    @property
+    def get_google_maps_url(self):
+        """Generate a Google Maps URL based on coordinates or address."""
+        if self.latitude and self.longitude:
+            return f"https://www.google.com/maps?q={self.latitude},{self.longitude}"
+        elif self.address:
+            # Format address for URL (replace spaces with +)
+            formatted_address = self.address.replace(' ', '+')
+            return f"https://www.google.com/maps?q={formatted_address}"
+        return None
