@@ -167,7 +167,7 @@ $(document).ready(function () {
         }).addTo(map);
     });
 
-    // Modify the fetchSchools function to use the correct parameter name
+    //  Fetches schools from the API based on filter parameters.
     function fetchSchools(province = "", district = "", municipalityType = "", schoolType = "") {
         $.ajax({
             url: `http://127.0.0.1:8000/api/schools/?province=${province}&district=${district}&municipality_type=${municipalityType}&school_type=${schoolType}`,
@@ -210,7 +210,7 @@ $(document).ready(function () {
         });
     }
 
-    // Function to update the district dropdown based on the selected province
+    // Updates the district dropdown options based on schools filtered by province.
     function updateDistrictOptions(schools) {
         // Get unique districts from the filtered schools
         const districts = [...new Set(schools
@@ -230,7 +230,7 @@ $(document).ready(function () {
         $("#districtFilter").html(options);
     }
 
-    // Function to update school list with improved UI
+    //  Updates the school list UI with the filtered schools data.
     function updateSchoolList(schools) {
         if (schools.length === 0) {
             $("#schoolList").html(`
@@ -329,7 +329,7 @@ $(document).ready(function () {
         });
     }
 
-    // Function to update map with appropriate markers based on school type
+    // Updates map markers based on filtered schools, applying appropriate icons based on school type.
     function updateMap(schools) {
         markersLayer.clearLayers(); // Remove previous markers
         
@@ -376,127 +376,127 @@ $(document).ready(function () {
         showSchoolDetails(schoolId);
     });
 
-// Function to show detailed school information
-function showSchoolDetails(schoolId) {
-    // Fetch specific school details
-    $.ajax({
-        url: `http://127.0.0.1:8000/api/schools/${schoolId}/`,
-        type: "GET",
-        dataType: "json",
-        success: function(school) {
-            // Create modal or sidebar with detailed information
-             const googleMapsUrl = school.google_maps_url || 
-                                 (school.latitude && school.longitude ? 
-                                  `https://www.google.com/maps?q=${school.latitude},${school.longitude}` : 
-                                  `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(school.address + ', ' + (school.district || '') + ', ' + (school.province || ''))}`);
-            const detailsHTML = `
-                <div class="p-6 relative">
-                    <button id="closeDetailsBtn" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <line x1="18" y1="6" x2="6" y2="18"></line>
-                            <line x1="6" y1="6" x2="18" y2="18"></line>
-                        </svg>
-                    </button>
-                    
-                    <h2 class="text-2xl font-bold mb-6 pr-8">${school.name}</h2>
-                    
-                    <div class="space-y-4">
-                        <div class="bg-gray-50 p-4 rounded-lg">
-                            <h3 class="text-sm uppercase text-black-500 font-medium mb-2">Location</h3>
-                            <p class="mb-1"><i class="fas fa-map-marker-alt text-gray-400 mr-2"></i>${school.address}</p>
-                            <p class="mb-2"><i class="fas fa-globe-asia text-gray-400 mr-2"></i>Province ${school.province || 'N/A'}</p>
-                            <a href="${googleMapsUrl}" target="_blank" class="text-blue-600 hover:underline flex items-center">
-                                <i class="fas fa-map text-gray-400 mr-2"></i>View on Google Maps
-                                <svg class="w-3 h-3 ml-1" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd"></path>
-                                </svg>
-                            </a>
-                        </div>
+//  Fetches and displays detailed information about a specific school in a side panel.
+    function showSchoolDetails(schoolId) {
+        // Fetch specific school details
+        $.ajax({
+            url: `http://127.0.0.1:8000/api/schools/${schoolId}/`,
+            type: "GET",
+            dataType: "json",
+            success: function(school) {
+                // Create modal or sidebar with detailed information
+                const googleMapsUrl = school.google_maps_url || 
+                                    (school.latitude && school.longitude ? 
+                                    `https://www.google.com/maps?q=${school.latitude},${school.longitude}` : 
+                                    `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(school.address + ', ' + (school.district || '') + ', ' + (school.province || ''))}`);
+                const detailsHTML = `
+                    <div class="p-6 relative">
+                        <button id="closeDetailsBtn" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                        </button>
                         
-                        <div class="bg-gray-50 p-4 rounded-lg">
-                            <h3 class="text-sm uppercase text-black-500 font-medium mb-2">School Info</h3>
-                            <div class="grid grid-cols-2 gap-y-2">
-                                <p><span class="font-medium">Type:</span> ${school.school_type || 'N/A'}</p>
-                                <p><span class="font-medium">Est. Year:</span> ${school.established_year || 'N/A'}</p>
-                                <p><span class="font-medium">Students:</span> ${school.student_count || 'N/A'}</p>
-                                <p><span class="font-medium">Staff:</span> ${school.staff_count || 'N/A'}</p>
-                            </div>
-                        </div>
+                        <h2 class="text-2xl font-bold mb-6 pr-8">${school.name}</h2>
                         
-                        <div class="bg-gray-50 p-4 rounded-lg">
-                            <h3 class="text-sm uppercase text-black-500 font-medium mb-2">Contact</h3>
-                            <p class="mb-1"><i class="fas fa-phone text-gray-400 mr-2"></i>${school.contact_number || 'N/A'}</p>
-                            <p class="mb-1"><i class="fas fa-envelope text-gray-400 mr-2"></i>${school.email || 'N/A'}</p>
-                            <p>${school.website ? 
-                                `<a href="${school.website}" target="_blank" class="text-blue-600 hover:underline flex items-center">
-                                    <i class="fas fa-globe text-gray-400 mr-2"></i>Visit Website
+                        <div class="space-y-4">
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <h3 class="text-sm uppercase text-black-500 font-medium mb-2">Location</h3>
+                                <p class="mb-1"><i class="fas fa-map-marker-alt text-gray-400 mr-2"></i>${school.address}</p>
+                                <p class="mb-2"><i class="fas fa-globe-asia text-gray-400 mr-2"></i>Province ${school.province || 'N/A'}</p>
+                                <a href="${googleMapsUrl}" target="_blank" class="text-blue-600 hover:underline flex items-center">
+                                    <i class="fas fa-map text-gray-400 mr-2"></i>View on Google Maps
                                     <svg class="w-3 h-3 ml-1" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd"></path>
                                     </svg>
-                                </a>` : '<i class="fas fa-globe text-gray-400 mr-2"></i>N/A'}
-                            </p>
+                                </a>
+                            </div>
+                            
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <h3 class="text-sm uppercase text-black-500 font-medium mb-2">School Info</h3>
+                                <div class="grid grid-cols-2 gap-y-2">
+                                    <p><span class="font-medium">Type:</span> ${school.school_type || 'N/A'}</p>
+                                    <p><span class="font-medium">Est. Year:</span> ${school.established_year || 'N/A'}</p>
+                                    <p><span class="font-medium">Students:</span> ${school.student_count || 'N/A'}</p>
+                                    <p><span class="font-medium">Staff:</span> ${school.staff_count || 'N/A'}</p>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <h3 class="text-sm uppercase text-black-500 font-medium mb-2">Contact</h3>
+                                <p class="mb-1"><i class="fas fa-phone text-gray-400 mr-2"></i>${school.contact_number || 'N/A'}</p>
+                                <p class="mb-1"><i class="fas fa-envelope text-gray-400 mr-2"></i>${school.email || 'N/A'}</p>
+                                <p>${school.website ? 
+                                    `<a href="${school.website}" target="_blank" class="text-blue-600 hover:underline flex items-center">
+                                        <i class="fas fa-globe text-gray-400 mr-2"></i>Visit Website
+                                        <svg class="w-3 h-3 ml-1" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                                        </svg>
+                                    </a>` : '<i class="fas fa-globe text-gray-400 mr-2"></i>N/A'}
+                                </p>
+                            </div>
+                            
+                            ${school.facilities ? `
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <h3 class="text-sm uppercase text-black-500 font-medium mb-2">Facilities</h3>
+                                <p>${school.facilities}</p>
+                            </div>` : ''}
+        
+                            
+                            <div class="mt-6 text-center">
+                                <a href="${googleMapsUrl}" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md shadow-sm transition duration-200 inline-flex items-center">
+                                    <i class="fas fa-directions mr-2"></i> Get Directions
+                                </a>
+                            </div>
                         </div>
-                        
-                        ${school.facilities ? `
-                        <div class="bg-gray-50 p-4 rounded-lg">
-                            <h3 class="text-sm uppercase text-black-500 font-medium mb-2">Facilities</h3>
-                            <p>${school.facilities}</p>
-                        </div>` : ''}
-      
-                        
-                        <div class="mt-6 text-center">
-                            <a href="${googleMapsUrl}" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md shadow-sm transition duration-200 inline-flex items-center">
-                                <i class="fas fa-directions mr-2"></i> Get Directions
-                            </a>
-                        </div>
-                    </div>
-                </div>`;
-            
-            // Remove any existing overlay and panel first to avoid duplicates
-            $('#schoolDetailsOverlay, #schoolDetailsPanel').remove();
-            
-            // Add overlay and panel with very high z-index values
-            $('body').append(`
-                <div id="schoolDetailsOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-[9998]"></div>
-                <div id="schoolDetailsPanel" class="fixed top-0 right-0 h-full w-96 bg-white shadow-lg z-[9999] overflow-y-auto transform translate-x-full transition-transform duration-300">${detailsHTML}</div>
-            `);
-            
-            // Make sure Leaflet controls are below our overlay
-            $('.leaflet-control-container').css('z-index', '400');
-            
-            // Ensure the panel is above popups
-            $('.leaflet-popup').css('z-index', '700');
-            
-            // Show the panel with animation
-            setTimeout(() => {
-                $('#schoolDetailsPanel').css('transform', 'translateX(0)');
-            }, 50);
-            
-            // Add event listener to close button
-            $('#closeDetailsBtn').click(function() {
-                $('#schoolDetailsPanel').css('transform', 'translateX(100%)');
+                    </div>`;
+                
+                // Remove any existing overlay and panel first to avoid duplicates
+                $('#schoolDetailsOverlay, #schoolDetailsPanel').remove();
+                
+                // Add overlay and panel with very high z-index values
+                $('body').append(`
+                    <div id="schoolDetailsOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-[9998]"></div>
+                    <div id="schoolDetailsPanel" class="fixed top-0 right-0 h-full w-96 bg-white shadow-lg z-[9999] overflow-y-auto transform translate-x-full transition-transform duration-300">${detailsHTML}</div>
+                `);
+                
+                // Make sure Leaflet controls are below our overlay
+                $('.leaflet-control-container').css('z-index', '400');
+                
+                // Ensure the panel is above popups
+                $('.leaflet-popup').css('z-index', '700');
+                
+                // Show the panel with animation
                 setTimeout(() => {
-                    $('#schoolDetailsOverlay').remove();
-                }, 300);
-            });
-            
-            // Also close when clicking overlay
-            $('#schoolDetailsOverlay').click(function() {
-                $('#closeDetailsBtn').click();
-            });
-            
-            // Make sure map is properly sized
-            if (typeof map !== 'undefined') {
-                setTimeout(() => {
-                    map.invalidateSize();
-                }, 350);
+                    $('#schoolDetailsPanel').css('transform', 'translateX(0)');
+                }, 50);
+                
+                // Add event listener to close button
+                $('#closeDetailsBtn').click(function() {
+                    $('#schoolDetailsPanel').css('transform', 'translateX(100%)');
+                    setTimeout(() => {
+                        $('#schoolDetailsOverlay').remove();
+                    }, 300);
+                });
+                
+                // Also close when clicking overlay
+                $('#schoolDetailsOverlay').click(function() {
+                    $('#closeDetailsBtn').click();
+                });
+                
+                // Make sure map is properly sized
+                if (typeof map !== 'undefined') {
+                    setTimeout(() => {
+                        map.invalidateSize();
+                    }, 350);
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error("Error fetching school details:", error);
             }
-        },
-        error: function(xhr, status, error) {
-            console.error("Error fetching school details:", error);
-        }
-    });
-}
+        });
+    }
 
     // Fetch schools when province filter is changed
     $("#provinceFilter").change(function () {
@@ -625,74 +625,74 @@ function showSchoolDetails(schoolId) {
     });
 });
 
-// Change this function to accept the map as a parameter
-function addMapLegend(map) {
-    // Create a legend control
-    var legend = L.control({ position: 'bottomright' });
-    
-    legend.onAdd = function(map) {
-        var div = L.DomUtil.create('div', 'info legend bg-white p-3 rounded shadow-md');
+//  Adds a legend to the map showing different school types with their corresponding icons.
+    function addMapLegend(map) {
+        // Create a legend control
+        var legend = L.control({ position: 'bottomright' });
         
-        div.innerHTML = `
-            <h4 class="font-medium mb-2">School Types</h4>
-            <div class="school-icon-legend">
-                <img src="https://cdn-icons-png.flaticon.com/128/17573/17573589.png" alt="Private School">
-                <span>Private School</span>
-            </div>
-            <div class="school-icon-legend">
-                <img src="https://cdn-icons-png.flaticon.com/128/1183/1183386.png" alt="Community School">
-                <span>Community School</span>
-            </div>
-            <div class="school-icon-legend">
-                <img src="https://cdn-icons-png.flaticon.com/128/1691/1691970.png" alt="Other School">
-                <span>Other Types</span>
-            </div>
-        `;
+        legend.onAdd = function(map) {
+            var div = L.DomUtil.create('div', 'info legend bg-white p-3 rounded shadow-md');
+            
+            div.innerHTML = `
+                <h4 class="font-medium mb-2">School Types</h4>
+                <div class="school-icon-legend">
+                    <img src="https://cdn-icons-png.flaticon.com/128/17573/17573589.png" alt="Private School">
+                    <span>Private School</span>
+                </div>
+                <div class="school-icon-legend">
+                    <img src="https://cdn-icons-png.flaticon.com/128/1183/1183386.png" alt="Community School">
+                    <span>Community School</span>
+                </div>
+                <div class="school-icon-legend">
+                    <img src="https://cdn-icons-png.flaticon.com/128/1691/1691970.png" alt="Other School">
+                    <span>Other Types</span>
+                </div>
+            `;
+            
+            div.style.cssText = 'background-color: white; padding: 10px; border-radius: 5px;';
+            return div;
+        };
         
-        div.style.cssText = 'background-color: white; padding: 10px; border-radius: 5px;';
-        return div;
-    };
-    
-    legend.addTo(map);
-}
+        legend.addTo(map);
+    }
 
-// Updated updateActiveFilters function with better event handling
-function updateActiveFilters() {
-    const province = $("#provinceFilter").val();
-    const district = $("#districtFilter").val();
-    const municipalityType = $("#municipalityTypeFilter").val();
-    const schoolType = $("#schoolTypeFilter").val();
-    
-    let filterHTML = '';
-    
-    if (province || district || municipalityType || schoolType) {
-        // Change from justify-between to just a flex container with gap
-        filterHTML = '<div class="flex flex-wrap items-center gap-3">';
+//  Displays active filter tags based on selected filter values and adds a clear button.
+    function updateActiveFilters() {
+        const province = $("#provinceFilter").val();
+        const district = $("#districtFilter").val();
+        const municipalityType = $("#municipalityTypeFilter").val();
+        const schoolType = $("#schoolTypeFilter").val();
         
-        // Active filters tags first
-        filterHTML += '<span class="font-medium text-xs text-gray-500">Active Filters:</span>';
+        let filterHTML = '';
         
-        if (province) {
-            filterHTML += `<span class="inline-block bg-blue-100 text-blue-800 rounded-full px-2 py-0.5 text-xs">Province: ${province}</span>`;
-        }
-        
-        if (district) {
-            filterHTML += `<span class="inline-block bg-blue-100 text-blue-800 rounded-full px-2 py-0.5 text-xs">District: ${district}</span>`;
-        }
-        
-        if (municipalityType) {
-            filterHTML += `<span class="inline-block bg-blue-100 text-blue-800 rounded-full px-2 py-0.5 text-xs">Municipality: ${municipalityType}</span>`;
-        }
-        
-        if (schoolType) {
-            filterHTML += `<span class="inline-block bg-blue-100 text-blue-800 rounded-full px-2 py-0.5 text-xs">Type: ${schoolType}</span>`;
-        }
-        
-        // Clear button right after the filter tags (not wrapped in its own div)
-        filterHTML += '<button id="clearActiveFilters" class="bg-red-100 hover:bg-red-200 text-red-700 font-medium px-3 py-0.5 rounded-md text-xs transition-colors flex items-center shadow-sm">';
-        filterHTML += '<i class="fas fa-times-circle mr-1"></i> Clear</button>';
-        
-        filterHTML += '</div>';
+        if (province || district || municipalityType || schoolType) {
+            // Change from justify-between to just a flex container with gap
+            filterHTML = '<div class="flex flex-wrap items-center gap-3">';
+            
+            // Active filters tags first
+            filterHTML += '<span class="font-medium text-xs text-gray-500">Active Filters:</span>';
+            
+            if (province) {
+                filterHTML += `<span class="inline-block bg-blue-100 text-blue-800 rounded-full px-2 py-0.5 text-xs">Province: ${province}</span>`;
+            }
+            
+            if (district) {
+                filterHTML += `<span class="inline-block bg-blue-100 text-blue-800 rounded-full px-2 py-0.5 text-xs">District: ${district}</span>`;
+            }
+            
+            if (municipalityType) {
+                filterHTML += `<span class="inline-block bg-blue-100 text-blue-800 rounded-full px-2 py-0.5 text-xs">Municipality: ${municipalityType}</span>`;
+            }
+            
+            if (schoolType) {
+                filterHTML += `<span class="inline-block bg-blue-100 text-blue-800 rounded-full px-2 py-0.5 text-xs">Type: ${schoolType}</span>`;
+            }
+            
+            // Clear button right after the filter tags (not wrapped in its own div)
+            filterHTML += '<button id="clearActiveFilters" class="bg-red-100 hover:bg-red-200 text-red-700 font-medium px-3 py-0.5 rounded-md text-xs transition-colors flex items-center shadow-sm">';
+            filterHTML += '<i class="fas fa-times-circle mr-1"></i> Clear</button>';
+            
+            filterHTML += '</div>';
     }
     
     // Update the DOM
@@ -723,21 +723,21 @@ function updateActiveFilters() {
     }
 }
 
-// Add unified filter handler
-function setupFilterHandlers() {
-    $("#provinceFilter, #districtFilter, #municipalityTypeFilter, #schoolTypeFilter").on("change", function() {
-        let selectedProvince = $("#provinceFilter").val();
-        let selectedDistrict = $("#districtFilter").val();
-        let selectedMunicipalityType = $("#municipalityTypeFilter").val();
-        let selectedSchoolType = $("#schoolTypeFilter").val();
-        
-        // Special handling for province change
-        if ($(this).attr('id') === 'provinceFilter') {
-            // Reset district when province changes
-            selectedDistrict = "";
-            $("#districtFilter").val("");
-        }
-        
-        fetchSchools(selectedProvince, selectedDistrict, selectedMunicipalityType, selectedSchoolType);
-    });
-}
+// Sets up change event handlers for all filter dropdowns to fetch schools based on filter selections.
+    function setupFilterHandlers() {
+        $("#provinceFilter, #districtFilter, #municipalityTypeFilter, #schoolTypeFilter").on("change", function() {
+            let selectedProvince = $("#provinceFilter").val();
+            let selectedDistrict = $("#districtFilter").val();
+            let selectedMunicipalityType = $("#municipalityTypeFilter").val();
+            let selectedSchoolType = $("#schoolTypeFilter").val();
+            
+            // Special handling for province change
+            if ($(this).attr('id') === 'provinceFilter') {
+                // Reset district when province changes
+                selectedDistrict = "";
+                $("#districtFilter").val("");
+            }
+            
+            fetchSchools(selectedProvince, selectedDistrict, selectedMunicipalityType, selectedSchoolType);
+        });
+    }
