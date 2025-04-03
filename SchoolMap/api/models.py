@@ -114,6 +114,10 @@ class School(models.Model):
     """Stores public and community school details."""
     name = models.CharField(max_length=255, unique=True)
     address = models.TextField()
+
+    # Profile Image and Bio
+    profile_image = models.ImageField(upload_to='school_images/', blank=True, null=True)
+    bio = models.TextField(blank=True, null=True, help_text="School description, history, and other important information")
     
     # Location Data
     province = models.CharField(max_length=50, choices=PROVINCE_CHOICES)

@@ -151,20 +151,37 @@ $(document).ready(function () {
     // Add layer control to switch between base maps
     L.control.layers(baseMaps, null, {collapsed: false}).addTo(map);
     
-    // Add Nepal border
-    $.getJSON('https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_10m_admin_0_countries.geojson', function(data) {
-        // Filter to get only Nepal
-        L.geoJSON(data, {
-            filter: function(feature) {
-                return feature.properties.ADMIN === "Nepal";
-            },
+
+// Add Nepal border using local nepal-states.geojson
+    $.getJSON('nepal-states.geojson', function(data) {
+        console.log("Nepal states GeoJSON loaded successfully");
+        
+        // Create a combined border from all provinces
+        var nepalBorder = L.geoJSON(data, {
             style: {
-                color: 'black',
-                weight: 3,
+                color: '#4b4241',
+                weight: 1,
                 fillColor: 'transparent',
-                fillOpacity: 0
+                fillOpacity: 0,
+                dashArray: '',
+                lineCap: 'round',
+                lineJoin: 'round'
             }
         }).addTo(map);
+        
+        // Create a tooltip for the country
+        nepalBorder.bindTooltip("Nepal", {
+            permanent: false,
+            direction: "center",
+            className: "country-tooltip"
+        });
+        
+        console.log("Nepal border added successfully");
+    }).fail(function(error) {
+        console.error("Error loading nepal-states.geojson:", error);
+        
+        // Fallback to a simpler approach if the file can't be loaded
+        alert("Failed to load Nepal border. Please check the console for details.");
     });
 
     //  Fetches schools from the API based on filter parameters.
@@ -399,6 +416,11 @@ $(document).ready(function () {
                         </button>
                         
                         <h2 class="text-2xl font-bold mb-6 pr-8">${school.name}</h2>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <img src="${school.profile_image || 'https://via.placeholder.com/300x200'}" alt="${school.name}" class="w-full h-48 object-cover rounded-lg mb-4">
+                            <h3 class="text-lg font-semibold mb-2">About</h3>
+                            <p class="text-gray-600 mb-4 text-justify">${school.bio || 'No description available.'}</p>
+                        </div>
                         
                         <div class="space-y-4">
                             <div class="bg-gray-50 p-4 rounded-lg">
@@ -406,7 +428,7 @@ $(document).ready(function () {
                                 <p class="mb-1"><i class="fas fa-map-marker-alt text-gray-400 mr-2"></i>${school.address}</p>
                                 <p class="mb-2"><i class="fas fa-globe-asia text-gray-400 mr-2"></i>Province ${school.province || 'N/A'}</p>
                                 <a href="${googleMapsUrl}" target="_blank" class="text-blue-600 hover:underline flex items-center">
-                                    <i class="fas fa-map text-gray-400 mr-2"></i>View on Google Maps
+                                    <i class="fas fa-map text-gray-400 mr-2"></i>View Map Using Coordinates
                                     <svg class="w-3 h-3 ml-1" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd"></path>
                                     </svg>
@@ -440,15 +462,15 @@ $(document).ready(function () {
                             ${school.facilities ? `
                             <div class="bg-gray-50 p-4 rounded-lg">
                                 <h3 class="text-sm uppercase text-black-500 font-medium mb-2">Facilities</h3>
-                                <p>${school.facilities}</p>
+                                <p>${school.facilities || 'N/A'}</p>
                             </div>` : ''}
         
-                            
+                            ${school.google_maps_link ? `
                             <div class="mt-6 text-center">
-                                <a href="${googleMapsUrl}" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md shadow-sm transition duration-200 inline-flex items-center">
+                                <a href="${school.google_maps_link}" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md shadow-sm transition duration-200 inline-flex items-center">
                                     <i class="fas fa-directions mr-2"></i> Get Directions
                                 </a>
-                            </div>
+                            </div>` : ''}
                         </div>
                     </div>`;
                 
@@ -570,6 +592,7 @@ $(document).ready(function () {
 
     // Call this after your map is initialized
     addMapLegend(map);
+    addProvinceBorders(map);
     
     // Set up filter handlers
     setupFilterHandlers();
@@ -623,6 +646,7 @@ $(document).ready(function () {
             $(this).removeClass("border-blue-500");
         }, 500);
     });
+
 });
 
 //  Adds a legend to the map showing different school types with their corresponding icons.
@@ -741,3 +765,99 @@ $(document).ready(function () {
             fetchSchools(selectedProvince, selectedDistrict, selectedMunicipalityType, selectedSchoolType);
         });
     }
+
+// Add province borders that appear when zoomed in
+function addProvinceBorders(map) {
+    // Create a layer for province boundaries
+    var provinceLayer = L.layerGroup();
+    
+    // Load province GeoJSON data
+    $.getJSON('nepal-states.geojson', function(data) {
+        // Create the GeoJSON layer
+        var provinceBoundaries = L.geoJSON(data, {
+            style: function(feature) {
+                // Generate a unique color for each province
+                const provinceColors = [
+                    '#FF5733', '#33FF57', '#3357FF', '#F033FF', 
+                    '#FF33A8', '#33FFF0', '#F3FF33', '#9C33FF'
+                ];
+                
+                const provinceId = feature.properties.PROVINCE || 0;
+                const colorIndex = (provinceId % provinceColors.length);
+                
+                return {
+                    color: provinceColors[colorIndex],
+                    weight: 2,
+                    opacity: 0.7,
+                    fillOpacity: 0.1,
+                    fillColor: provinceColors[colorIndex]
+                };
+            },
+            onEachFeature: function(feature, layer) {
+                // Add tooltip with province name
+                if (feature.properties && feature.properties.PROVINCE) {
+                    layer.bindTooltip(`Province ${feature.properties.PROVINCE}`, {
+                        permanent: false,
+                        direction: 'center',
+                        className: 'province-tooltip'
+                    });
+                }
+            }
+        });
+        
+        // Add to province layer
+        provinceBoundaries.addTo(provinceLayer);
+        
+        // Add custom CSS for the province tooltip
+        $('<style>')
+            .prop('type', 'text/css')
+            .html(`
+                .province-tooltip {
+                    background: rgba(255, 255, 255, 0.8);
+                    border: none;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+                    font-weight: bold;
+                    font-size: 14px;
+                }
+            `)
+            .appendTo('head');
+        
+        // Add province layer to layer control
+        var overlays = {
+            "Province Boundaries": provinceLayer
+        };
+        
+        // Add to layer control
+        L.control.layers(null, overlays, {position: 'topright'}).addTo(map);
+        
+        console.log("Province data loaded:", data.features.length, "provinces");
+        
+        // Set up zoom condition for displaying borders
+        map.on('zoomend', function() {
+            const zoomLevel = map.getZoom();
+            console.log("Current zoom level:", zoomLevel);
+            
+            if (zoomLevel >= 8) {
+                if (!map.hasLayer(provinceLayer)) {
+                    console.log("Adding province layer");
+                    map.addLayer(provinceLayer);
+                }
+            } else {
+                if (map.hasLayer(provinceLayer)) {
+                    console.log("Removing province layer");
+                    map.removeLayer(provinceLayer);
+                }
+            }
+        });
+        
+        // Initial check based on current zoom level
+        const currentZoom = map.getZoom();
+        console.log("Initial zoom level:", currentZoom);
+        if (currentZoom >= 8) {
+            console.log("Adding province layer initially");
+            map.addLayer(provinceLayer);
+        }
+    }).fail(function(error) {
+        console.error("Failed to load province data:", error);
+    });
+}
