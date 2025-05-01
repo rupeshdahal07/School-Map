@@ -348,8 +348,18 @@ $(document).ready(function () {
 
     // Updates map markers based on filtered schools, applying appropriate icons based on school type.
     function updateMap(schools) {
+        console.log("Updating map with", schools.length, "schools");
         markersLayer.clearLayers(); // Remove previous markers
         
+        // Handle initial creation or update of count layer
+        if (window.schoolCountsLayer) {
+            map.removeLayer(window.schoolCountsLayer);
+        }
+        
+        // Create a new counts layer
+        window.schoolCountsLayer = addSchoolCountsLayer(map, schools);
+        
+        // Add individual school markers
         schools.forEach(school => {
             // Determine which icon to use based on school type
             let icon;
@@ -385,6 +395,9 @@ $(document).ready(function () {
                 .bindPopup(popupContent)
                 .addTo(markersLayer);
         });
+        
+        // Set up zoom handler for toggling between counts and individual markers
+        setupZoomHandler(map, markersLayer, window.schoolCountsLayer);
     }
 
     // Event delegation for the view-details button in popups
@@ -768,8 +781,44 @@ $(document).ready(function () {
 
 // Add province borders that appear when zoomed in
 function addProvinceBorders(map) {
+    // Check if we've already added province layer control
+    if (window.provinceLayerControlAdded) {
+        console.log("Province layer already initialized, skipping");
+        return;
+    }
+    
+    console.log("Initializing province borders");
+    
     // Create a layer for province boundaries
     var provinceLayer = L.layerGroup();
+    
+    // Store reference globally
+    window.provinceLayer = provinceLayer;
+    window.provinceLayerControlAdded = true;
+    
+    // Add custom CSS for the province tooltip if not already added
+    if (!document.getElementById('province-tooltip-style')) {
+        $('<style id="province-tooltip-style">')
+            .prop('type', 'text/css')
+            .html(`
+                .province-tooltip {
+                    background: rgba(255, 255, 255, 0.8);
+                    border: none;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+                    font-weight: bold;
+                    font-size: 14px;
+                }
+            `)
+            .appendTo('head');
+    }
+    
+    // Add province layer to layer control right away (empty for now)
+    var overlays = {
+        "Province Boundaries": provinceLayer
+    };
+    
+    // Add to layer control
+    window.provinceControl = L.control.layers(null, overlays, {position: 'topright'}).addTo(map);
     
     // Load province GeoJSON data
     $.getJSON('nepal-states.geojson', function(data) {
@@ -799,43 +848,23 @@ function addProvinceBorders(map) {
                     layer.bindTooltip(`Province ${feature.properties.PROVINCE}`, {
                         permanent: false,
                         direction: 'center',
-                        className: 'province-tooltip'
+                        className: 'province-tooltip'       
                     });
                 }
             }
         });
         
         // Add to province layer
-        provinceBoundaries.addTo(provinceLayer);
-        
-        // Add custom CSS for the province tooltip
-        $('<style>')
-            .prop('type', 'text/css')
-            .html(`
-                .province-tooltip {
-                    background: rgba(255, 255, 255, 0.8);
-                    border: none;
-                    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-                    font-weight: bold;
-                    font-size: 14px;
-                }
-            `)
-            .appendTo('head');
-        
-        // Add province layer to layer control
-        var overlays = {
-            "Province Boundaries": provinceLayer
-        };
-        
-        // Add to layer control
-        L.control.layers(null, overlays, {position: 'topright'}).addTo(map);
+        provinceLayer.addLayer(provinceBoundaries);
         
         console.log("Province data loaded:", data.features.length, "provinces");
         
-        // Set up zoom condition for displaying borders
-        map.on('zoomend', function() {
+        // Clean up any existing zoomend handlers for provinces
+        map.off('zoomend.provinces');
+        
+        // Set up zoom condition for displaying borders with a namespaced event
+        map.on('zoomend.provinces', function() {
             const zoomLevel = map.getZoom();
-            console.log("Current zoom level:", zoomLevel);
             
             if (zoomLevel >= 8) {
                 if (!map.hasLayer(provinceLayer)) {
@@ -852,12 +881,225 @@ function addProvinceBorders(map) {
         
         // Initial check based on current zoom level
         const currentZoom = map.getZoom();
-        console.log("Initial zoom level:", currentZoom);
         if (currentZoom >= 8) {
-            console.log("Adding province layer initially");
             map.addLayer(provinceLayer);
+        } else {
+            map.removeLayer(provinceLayer);
         }
     }).fail(function(error) {
         console.error("Failed to load province data:", error);
     });
+}
+
+// Add this helper function to the bottom of your file
+function resetProvinceLayers() {
+    // Use this function if you need to reset province layers state
+    window.provinceLayerControlAdded = false;
+}
+
+// Add this function to your script.js file
+function addSchoolCountsLayer(map, schools) {
+    console.log("Creating school counts layer with", schools.length, "schools");
+    
+    // Create a new layer group for province counts
+    var schoolCountsLayer = L.layerGroup();
+    
+    // Group schools by province
+    const schoolsByProvince = {};
+    schools.forEach(school => {
+        if (school.province) {
+            if (!schoolsByProvince[school.province]) {
+                schoolsByProvince[school.province] = [];
+            }
+            schoolsByProvince[school.province].push(school);
+        }
+    });
+    
+    console.log("Schools grouped by province:", Object.keys(schoolsByProvince).map(p => 
+        `${p}: ${schoolsByProvince[p].length} schools`
+    ));
+    
+    // Add custom CSS for the count markers if not already present
+    if (!$('#count-styles').length) {
+        $('<style id="count-styles">')
+            .prop('type', 'text/css')
+            .html(`
+                .province-count-icon {
+                    background: none !important;
+                    border: none !important;
+                }
+                .province-count {
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    width: 40px !important;
+                    height: 40px !important;
+                    background-color: #3b82f6 !important;
+                    color: white !important;
+                    font-weight: bold !important;
+                    font-size: 16px !important;
+                    border-radius: 50% !important;
+                    box-shadow: 0 2px 5px rgba(0,0,0,0.3) !important;
+                    z-index: 1000 !important;
+                }
+                .count-tooltip {
+                    background: rgba(255, 255, 255, 0.9) !important;
+                    border: none !important;
+                    border-radius: 4px !important;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.2) !important;
+                    font-weight: bold !important;
+                    z-index: 1001 !important;
+                }
+            `)
+            .appendTo('head');
+    }
+    
+    // Create hardcoded markers for each province since GeoJSON might be causing issues
+    const provinceCoordinates = {
+        'Koshi Pradesh': [27.2036, 87.2025],
+        'Madhesh Pradesh': [26.7271, 85.9385],
+        'Bagmati Pradesh': [27.7172, 85.3240],
+        'Gandaki Pradesh': [28.2622, 83.9856],
+        'Lumbini Pradesh': [27.6588, 83.4008],
+        'Karnali Pradesh': [29.4752, 82.1697],
+        'Sudurpashchim Pradesh': [29.3549, 80.6320]
+    };
+    
+    // Create a count marker for each province
+    for (const provinceName in provinceCoordinates) {
+        // Find the matching province in our data
+        let matchingProvince = null;
+        for (const p in schoolsByProvince) {
+            if (p.includes(provinceName) || provinceName.includes(p)) {
+                matchingProvince = p;
+                break;
+            }
+        }
+        
+        const schoolCount = matchingProvince ? schoolsByProvince[matchingProvince].length : 0;
+        
+        if (schoolCount > 0) {
+            const coords = provinceCoordinates[provinceName];
+            console.log(`Adding count marker for ${provinceName} at ${coords}: ${schoolCount} schools`);
+            
+            try {
+                // Create a custom div icon with count
+                const countIcon = L.divIcon({
+                    html: `<div class="province-count">${schoolCount}</div>`,
+                    className: 'province-count-icon',
+                    iconSize: [50, 50],
+                    iconAnchor: [25, 25]
+                });
+                
+                // Create marker and add to layer
+                const marker = L.marker(coords, { 
+                    icon: countIcon,
+                    zIndexOffset: 1000 // Make sure counts appear above other markers
+                }).bindTooltip(`${provinceName}: ${schoolCount} schools`, {
+                    permanent: false,
+                    direction: 'top',
+                    className: 'count-tooltip'
+                });
+                
+                schoolCountsLayer.addLayer(marker);
+            } catch (e) {
+                console.error(`Error creating count marker for ${provinceName}:`, e);
+            }
+        }
+    }
+    
+    // Add the layer group to the map
+    map.addLayer(schoolCountsLayer);
+    console.log(`Created ${schoolCountsLayer.getLayers().length} count markers`);
+    
+    return schoolCountsLayer;
+}
+
+// Add a function to initialize the zoom handler on page load
+function initializeZoomHandler(map, markersLayer) {
+    // Create the counts layer first time
+    if (!window.schoolCountsLayer) {
+        // We'll fetch schools first to initialize it correctly
+        $.ajax({
+            url: 'http://127.0.0.1:8000/api/schools/',
+            type: 'GET',
+            dataType: 'json',
+            success: function(schools) {
+                window.schoolCountsLayer = addSchoolCountsLayer(map, schools);
+                setupZoomHandler(map, markersLayer, window.schoolCountsLayer);
+            },
+            error: function(err) {
+                console.error("Failed to fetch schools for count layer:", err);
+            }
+        });
+    }
+}
+
+// In your document ready function, add this line after map initialization:
+// initializeZoomHandler(map, markersLayer);
+
+// Add this new function to handle zoom transitions
+function setupZoomHandler(map, markersLayer, countsLayer) {
+    // Store the current zoom level
+    const zoomThreshold = 9; // Adjust this threshold as needed
+    
+    // Handle initial visibility based on current zoom
+    const currentZoom = map.getZoom();
+    toggleLayersByZoom(currentZoom, markersLayer, countsLayer, zoomThreshold);
+    
+    // Set up the zoom event handler
+    map.off('zoomend'); // Remove previous handlers to avoid duplicates
+    map.on('zoomend', function() {
+        const newZoom = map.getZoom();
+        toggleLayersByZoom(newZoom, markersLayer, countsLayer, zoomThreshold);
+    });
+}
+
+// Improved toggleLayersByZoom function with better error handling
+function toggleLayersByZoom(zoomLevel, markersLayer, countsLayer, threshold) {
+    console.log(`Toggling layers - zoom: ${zoomLevel}, threshold: ${threshold}`);
+    
+    if (zoomLevel >= threshold) {
+        // Show individual markers
+        if (markersLayer) {
+            markersLayer.eachLayer(function(layer) {
+                if (layer._icon) {
+                    layer._icon.style.display = '';
+                    if (layer._shadow) layer._shadow.style.display = '';
+                }
+            });
+        }
+        
+        // Hide count markers
+        if (countsLayer) {
+            countsLayer.eachLayer(function(layer) {
+                if (layer._icon) {
+                    layer._icon.style.display = 'none';
+                    if (layer._shadow) layer._shadow.style.display = 'none';
+                }
+            });
+        }
+        console.log("Showing individual markers, hiding counts");
+    } else {
+        // Hide individual markers
+        if (markersLayer) {
+            markersLayer.eachLayer(function(layer) {
+                if (layer._icon) {
+                    layer._icon.style.display = 'none';
+                    if (layer._shadow) layer._shadow.style.display = 'none';
+                }
+            });
+        }
+        
+        // Show count markers
+        if (countsLayer) {
+            countsLayer.eachLayer(function(layer) {
+                if (layer._icon) {
+                    layer._icon.style.display = '';
+                    if (layer._shadow) layer._shadow.style.display = '';
+                }
+            });
+        }
+        console.log("Showing count markers, hiding individual markers");
+    }
 }

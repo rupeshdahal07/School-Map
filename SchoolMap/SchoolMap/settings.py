@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'api',
     'corsheaders',
+    'import_export',
 ]
 
 MIDDLEWARE = [
@@ -60,6 +61,8 @@ CORS_ALLOW_ALL_ORIGINS = False  # More secure to specify allowed origins
 CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:5500",
     "http://localhost:5500",
+    "http://127.0.0.1:5501",  # Add this line
+    "http://localhost:5501",
 ]
 
 # Optional: If you need cookies/credentials support

@@ -7,4 +7,5 @@ router.register(r'schools', SchoolViewSet, basename='school')
 
 urlpatterns = [
     path('api/', include(router.urls)),
+    path('auth/', include('rest_framework.urls', namespace='rest_framework')),
 ]

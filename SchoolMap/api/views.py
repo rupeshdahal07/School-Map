@@ -1,11 +1,13 @@
 from rest_framework import viewsets
 from .models import School
 from .serializers import SchoolSerializer
+from rest_framework.authentication import SessionAuthentication
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 
 class SchoolViewSet(viewsets.ModelViewSet):
     queryset = School.objects.all()
     serializer_class = SchoolSerializer
+    authentication_classes = [SessionAuthentication]
     permission_classes = [IsAuthenticatedOrReadOnly]  # Anyone can read, but only authenticated users can edit
 
     # Filtering by province, district, and municipality type
